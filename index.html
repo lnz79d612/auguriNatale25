@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auguri di Natale Musicali</title>
+    <style>
+        :root {
+            --color-envelope: #b30000;
+            --color-envelope-dark: #8b0000;
+            --color-paper: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Modifica qui: inserimento immagine di sfondo */
+            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), 
+                        url('Sfondo.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+
+        /* --- Neve --- */
+        .snowflake {
+            position: absolute;
+            top: -10px;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+            animation: fall linear infinite;
+            z-index: 1;
+        }
+        @keyframes fall { to { transform: translateY(105vh); } }
+
+        /* --- Busta --- */
+        .envelope-wrapper {
+            position: relative;
+            z-index: 10;
+            cursor: pointer;
+            width: 320px;
+            height: 220px;
+        }
+
+        .envelope {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-envelope-dark);
+            border-radius: 0 0 5px 5px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
+        .envelope::before {
+            content: "";
+            position: absolute;
+            top: 0; z-index: 4;
+            border-top: 130px solid var(--color-envelope);
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            transform-origin: top;
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .envelope::after {
+            content: "";
+            position: absolute;
+            z-index: 3;
+            width: 0; height: 0;
+            border-top: 110px solid transparent;
+            border-right: 160px solid var(--color-envelope);
+            border-bottom: 110px solid var(--color-envelope);
+            border-left: 160px solid var(--color-envelope);
+            border-radius: 0 0 5px 5px;
+        }
+
+        /* --- Biglietto --- */
+        .letter {
+            position: absolute;
+            bottom: 10px;
+            left: 15px;
+            width: 290px;
+            height: 190px;
+            background-color: var(--color-paper);
+            z-index: 2;
+            transition: transform 0.8s ease-in-out, z-index 0.3s;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; 
+            align-items: center;
+            padding: 25px 0; 
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .letter-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .letter h2 { color: var(--color-envelope-dark); margin: 0; font-size: 1.4rem; font-style: italic; }
+        
+        .quote {
+            font-size: 0.85rem;
+            color: #333;
+            font-weight: bold;
+            padding: 0 15px;
+            line-height: 1.2;
+        }
+
+        .movie-source {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .tree-icon { font-size: 35px; line-height: 1; margin: 0; }
+        .spacer { height: 35px; width: 100%; }
+
+        /* --- Animazione Apertura --- */
+        .envelope-wrapper.is-open .envelope::before { transform: rotateX(180deg); z-index: 1; }
+        .envelope-wrapper.is-open .letter { transform: translateY(-165px); z-index: 5; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        .hint { 
+            position: absolute; bottom: -60px; width: 100%; text-align: center;
+            color: white; font-style: italic; font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="snow-container"></div>
+
+    <div class="envelope-wrapper" id="card">
+        <div class="envelope">
+            <div class="letter">
+                <div class="tree-icon">🎄</div>
+                
+                <div class="letter-content">
+                    <h2>Buon Natale!</h2>
+                    <div class="quote">"Il Natale non è solo un giorno, è uno stato d'animo."</div>
+                    <div class="movie-source">Dal film Miracolo nella 34ª strada</div>
+                </div>
+                
+                <div class="spacer"></div>
+            </div>
+        </div>
+        <p class="hint">Clicca per la sorpresa musicale</p>
+    </div>
+
+    <script>
+        // 1. MOTORE MUSICALE "CARILLON"
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playNote(freq, startTime, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(freq, startTime);
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.12, startTime + 0.02); 
+            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        function playFullJingleBells() {
+            const tempo = 0.45;
+            let now = audioCtx.currentTime;
+            const E4 = 329.63, G4 = 392.00, C4 = 261.63, D4 = 293.66, F4 = 349.23, A4 = 440.00;
+
+            const melody = [
+                [E4, tempo], [E4, tempo], [E4, tempo*2],
+                [E4, tempo], [E4, tempo], [E4, tempo*2],
+                [E4, tempo], [G4, tempo], [C4, tempo*1.5], [D4, tempo*0.5], [E4, tempo*4],
+                [F4, tempo], [F4, tempo], [F4, tempo*1.5], [F4, tempo*0.5],
+                [F4, tempo], [E4, tempo], [E4, tempo], [E4, tempo*0.5], [E4, tempo*0.5],
+                [E4, tempo], [D4, tempo], [D4, tempo], [E4, tempo], [D4, tempo*2], [G4, tempo*2]
+            ];
+
+            melody.forEach(([freq, dur]) => {
+                playNote(freq, now, dur * 2.5);
+                now += dur;
+            });
+        }
+
+        // 2. LOGICA APERTURA
+        const card = document.getElementById('card');
+        card.addEventListener('click', function open() {
+            if (!card.classList.contains('is-open')) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                card.classList.add('is-open');
+                document.querySelector('.hint').style.display = 'none';
+                playFullJingleBells();
+                setInterval(playFullJingleBells, 12000);
+                card.removeEventListener('click', open);
+            }
+        });
+
+        // 3. NEVE
+        const container = document.getElementById('snow-container');
+        for (let i = 0; i < 70; i++) { // Aumentata un po' la neve per l'atmosfera
+            const snow = document.createElement('div');
+            snow.className = 'snowflake';
+            snow.style.left = Math.random() * 100 + '%';
+            snow.style.width = snow.style.height = (Math.random() * 4 + 2) + 'px';
+            snow.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            snow.style.animationDelay = Math.random() * 5 + 's';
+            container.appendChild(snow);
+        }
+    </script>
+</body>
+</html>
